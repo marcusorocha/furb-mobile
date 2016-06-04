@@ -1,0 +1,13 @@
+<ion-view view-title="Indoor" cache-view="false">
+    <ion-content scroll="false">
+        <div id="niveis">
+            <ul>
+                <li ng-click="mudarNivel(+1)"> + </li>
+                <li> {{ pavimento.nivel }} </li>
+                <li ng-click="mudarNivel(-1)"> - </li>
+            </ul>
+        </div>
+
+        <div id="container"></div>
+    </ion-content>
+</ion-view>

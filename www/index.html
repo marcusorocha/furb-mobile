@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <title></title>
+
+    <link href="lib/ionic/css/ionic.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+
+    <!-- IF using Sass (run gulp sass first), then uncomment below and remove the CSS includes above
+    <link href="css/ionic.app.css" rel="stylesheet">
+    -->
+
+    <!-- ionic/angularjs js -->
+    <script src="lib/ionic/js/ionic.bundle.js"></script>
+
+    <!-- cordova script (this will be a 404 during development) -->
+    <script src="js/ng-cordova.min.js"></script>
+    <script src="cordova.js"></script>
+
+    <!-- ThreeJS -->
+    <script src="lib/three-js/build/three.js"></script>
+    <script src="lib/three-js/examples/js/cameras/CombinedCamera.js"></script>
+    <script src="lib/three-js/examples/js/renderers/Projector.js"></script>
+    <script src="lib/three-js/examples/js/renderers/CanvasRenderer.js"></script>
+    <script src="lib/three-js/examples/js/loaders/MTLLoader.js"></script>
+    <script src="lib/three-js/examples/js/loaders/OBJLoader.js"></script>
+    <script src="lib/three-js/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- Objetos do Mapa -->
+    <script src="js/objetos/planta.js"></script>
+    <script src="js/objetos/ambiente.js"></script>
+
+    <!-- your app's js -->
+    <script src="js/app.js"></script>
+    <script src="js/controllers.js"></script>
+    <script src="js/mapaController.js"></script>
+    <script src="js/indoorController.js"></script>
+    <script src="js/geolocationController.js"></script>
+    <script src="js/estruturaController.js"></script>
+    <script src="js/service.js"></script>
+    <script src="js/estruturaService.js"></script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?v=3&key=AIzaSyAuGgBClv2NeqbuW5CfXEYP3BQTgRhvzTQ&libraries=places,visualization"></script>
+  </head>
+
+  <body ng-app="starter">
+    <ion-nav-view></ion-nav-view>
+  </body>
+</html>

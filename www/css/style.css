@@ -1,0 +1,48 @@
+/* Empty. Add your own CSS if you like */
+#map, #container {
+    height: 100%;
+    width: 100%;
+}
+
+.scroll {
+    height: 100%;
+}
+
+#logo {
+    margin: 30px 0px;
+}
+
+.border-black {
+    border: 1px solid black;
+}
+
+.welcome {
+    height: 100%;
+    background-color: rgb(0,95,160);
+    text-align: center;
+}
+
+#google-map {
+  height: 60%;
+  margin: auto;
+}
+
+#niveis {
+    position: absolute;
+    width: 30px;
+    top: 15px;
+    left: 15px;
+    text-align: center;
+    font-size: 20px;
+    box-shadow: 0px 0px 4px grey;
+}
+
+#niveis > ul > li {
+    color: black;
+    background-color: white;
+    padding: 5px;
+}
+
+#niveis > ul > li > a {
+    text-decoration: none;
+}
