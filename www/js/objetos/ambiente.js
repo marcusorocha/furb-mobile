@@ -6,12 +6,13 @@ function AmbienteGrafio( container )
     var zooming;
     var log_enable = false;
     var width, height;
-
+    var raycaster;
     var zoomStart = new THREE.Vector2();
     var zoomDelta = new THREE.Vector2();
     var zoomEnd = new THREE.Vector2();
 
     this.scene = null;
+    this.onClickObject = null;
 
     init();
     animate();
@@ -20,6 +21,9 @@ function AmbienteGrafio( container )
     {
         width = container.clientWidth;
         height = container.clientHeight;
+        
+        //width = window.innerWidth;
+        //height = window.innerHeight;
 
         camera = new THREE.CombinedCamera( width / 2, height / 2, 70, 1, 1000, - 500, 1000 );
         camera.toOrthographic();
@@ -30,12 +34,15 @@ function AmbienteGrafio( container )
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setClearColor(new THREE.Color(0xFFFFFF));
         renderer.setPixelRatio( window.devicePixelRatio );
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(width, height);
+        renderer.sortObjects = false;
         renderer.clear();
+        
+        raycaster = new THREE.Raycaster();
 
         container.appendChild( renderer.domElement );
 
-        window.addEventListener('resize', onWindowResize, false);
+        container.addEventListener('resize', onWindowResize, false);
 
         container.addEventListener('mousedown', onMouseDown, false);
         container.addEventListener('mousemove', onMouseMove, false);
@@ -88,7 +95,7 @@ function AmbienteGrafio( container )
 
     function onMouseWheel( event )
     {
-        self.handleZoom( event.wheelDelta );
+        applyZoom( event.wheelDelta );
     }
 
     function startZoom( dx, dy )
@@ -103,27 +110,31 @@ function AmbienteGrafio( container )
     }
 
     function handleZoom( dx, dy )
-    {
-        const minZoom = 1.0;
-        const maxZoom = 20.0;
-
-        var ratio = 0.98;
+    {                
         var distance = Math.sqrt( dx * dx + dy * dy );
-        var nextZoom = camera.zoom;
-
+        
         zoomEnd.set( 0, distance );
 
         zoomDelta.subVectors( zoomEnd, zoomStart );
+        
+        applyZoom( zoomDelta.y );
 
-        nextZoom = ( zoomDelta.y > 0 ) ? camera.zoom / ratio : camera.zoom * ratio;
+        zoomStart.copy( zoomEnd );
+    }
+    
+    function applyZoom( delta )
+    {
+        const minZoom = 1.0;
+        const maxZoom = 20.0;
+        const ratio = 0.98;
+        
+        var nextZoom = ( delta > 0 ) ? camera.zoom / ratio : camera.zoom * ratio;
         
         if (camera.zoom != nextZoom)
         {
             var zoom = Math.max( minZoom, Math.min( maxZoom, nextZoom ) );        
             camera.setZoom(zoom);
-        }
-
-        zoomStart.copy( zoomEnd );
+        }        
     }
 
     function stopZoom()
@@ -151,11 +162,13 @@ function AmbienteGrafio( container )
             const deltaY = (y - moveY) / 2;
 
             const ratio = ((width / height) / camera.zoom) * 3.0;
-            const tranX = - (deltaX * ratio);
+            const tranX = + (deltaX * ratio);
             const tranY = + (deltaY * ratio);
 
-            camera.translateX(tranX);
-            camera.translateY(tranY);
+            //camera.translateX(tranX);
+            //camera.translateY(tranY);
+            self.scene.position.x += tranX;
+            self.scene.position.y -= tranY;
 
             moveX = x;
             moveY = y;
@@ -177,6 +190,27 @@ function AmbienteGrafio( container )
 
     function onMouseDown( event )
     {
+        event.preventDefault();
+        
+        if (self.onClickObject)
+        {
+            var x = event.clientX;
+            var y = event.clientY - 45;
+            
+            var mouse = new THREE.Vector2();
+            mouse.x = ( x / width ) * 2 - 1;
+		    mouse.y = - ( y / height ) * 2 + 1;
+            
+            raycaster.setFromCamera( mouse, camera.cameraO );
+            var intersects = raycaster.intersectObjects( self.scene.children );
+            if ( intersects.length > 0 )
+            {
+                var intersect = intersects[ 0 ];
+                self.onClickObject(intersect.object);
+                return;
+            }
+        }
+        
         startMove( event.clientX, event.clientY );
     }
 
@@ -246,11 +280,26 @@ function AmbienteGrafio( container )
 
     function render()
     {
+        //camera.lookAt( self.scene.position );
+        //camera.updateMatrixWorld();
+        
         renderer.render( self.scene, camera );
     }
 
     function log( message )
     {
         if (log_enable) console.log( message );
+    }
+    
+    this.limpar = function() 
+    {
+        for (var i = self.scene.children.length - 1; i >= 0 ; i--) 
+        {
+            var child = self.scene.children[ i ];
+
+            if (child !== camera ) { // camera are stored earlier
+                self.scene.remove(child);
+            }
+        }
     }
 }

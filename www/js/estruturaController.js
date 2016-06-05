@@ -25,7 +25,7 @@ strCtrlModule.controller('BlocosCtrl', function($scope, $ionicLoading, Estrutura
   EstruturaService.obterBlocos(campusId).then(function(response) 
   {
       $scope.blocos = response.data;
-      $ionicLoading.hide();    
+      $ionicLoading.hide();
   },
   function() 
   {
