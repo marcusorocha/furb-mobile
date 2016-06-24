@@ -1,5 +1,6 @@
 <ion-view view-title="Indoor" cache-view="false">
     <ion-content scroll="false">
+        
         <div id="niveis">
             <ul>
                 <li ng-click="mudarNivel(+1)"> + </li>
@@ -7,7 +8,14 @@
                 <li ng-click="mudarNivel(-1)"> - </li>
             </ul>
         </div>
+        
+        <div id="rota">
+            <span>Origem: {{ origem.descricao }}</span>
+            <span>Destino: {{ destino.descricao }}</span>
+            <button ng-click="calcularRota()">Calcular Rota</button>
+        </div>
 
         <div id="container"></div>
+        
     </ion-content>
 </ion-view>

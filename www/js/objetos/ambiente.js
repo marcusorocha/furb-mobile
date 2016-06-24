@@ -206,7 +206,7 @@ function AmbienteGrafio( container )
             if ( intersects.length > 0 )
             {
                 var intersect = intersects[ 0 ];
-                self.onClickObject(intersect.object);
+                self.onClickObject(intersect.object, event);
                 return;
             }
         }

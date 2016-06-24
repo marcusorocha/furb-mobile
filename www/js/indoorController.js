@@ -1,9 +1,13 @@
-strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPlatform, $ionicLoading, $ionicPopup, IndoorService, bloco)
+strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPlatform, $ionicLoading, $ionicPopup, IndoorService, GrafoService, RotaService, bloco)
 {
     $scope.pavimento = { };
     $scope.bloco = bloco.data;
     $scope.ambiente = null;
     $scope.grafo = { };
+    
+    // Variáveis para definição de rotas
+    $scope.origem = null;
+    $scope.destino = null;
 
     $scope.init = function()
     {
@@ -12,11 +16,62 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPlatform, $ionicLo
         $scope.pavimento = $scope.bloco.pavimentos[0];
 
         $scope.ambiente = new AmbienteGrafio(container);
-        $scope.ambiente.onClickObject = function(obj) 
+        $scope.ambiente.onClickObject = function(obj, event) 
         {
             if (obj instanceof Vertice)
             {
-                alert(obj.descricao);
+                //alert(obj.descricao);
+                
+                if ($scope.origem)
+                {
+                    if (obj.sid == $scope.origem.id)
+                    {
+                        var titulo = 'Origem';
+                        var msg = 'Deseja desmarcar o(a) ' + obj.descricao + ' como origem de sua rota ?';
+                        
+                        $scope.showConfirm(titulo, msg, function() 
+                        {
+                            // Somente entra quando for "Sim" 
+                            $scope.origem = null;
+                        });
+                    } 
+                    else 
+                    {
+                        if (($scope.destino) && (obj.sid == $scope.origem.id))
+                        {
+                            var titulo = 'Destino';
+                            var msg = 'Deseja desmarcar o(a) ' + obj.descricao + ' como destino de sua rota ?';
+                            
+                            $scope.showConfirm(titulo, msg, function() 
+                            {
+                                // Somente entra quando for "Sim" 
+                                $scope.destino = null;       
+                            });
+                        }
+                        else
+                        {
+                            var titulo = 'Destino';
+                            var msg = 'Deseja marcar o(a) ' + obj.descricao + ' como destino de sua rota ?';
+                            
+                            $scope.showConfirm(titulo, msg, function() 
+                            {
+                                // Somente entra quando for "Sim" 
+                                $scope.destino = obj.toJSON();       
+                            });
+                        }
+                    }
+                }
+                else
+                {
+                    var titulo = 'Origem';
+                    var msg = 'Deseja marcar o(a) ' + obj.descricao + ' como origem de sua rota ?';
+                    
+                    $scope.showConfirm(titulo, msg, function() 
+                    {
+                        // Somente entra quando for "Sim" 
+                        $scope.origem = obj.toJSON();       
+                    });
+                }
             }
         }
 
@@ -25,18 +80,30 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPlatform, $ionicLo
     
     $scope.carregarGrafo = function() 
     {
-        IndoorService.obterGrafoEdificio($scope.bloco.id).then
-        (
-            function(response) // Sucesso 
-            {
-                $scope.grafo = response.data;
-                $scope.mudarNivel(0);                
-            },
-            function(response) // Erro 
-            {
-                $scope.showAlert("Ocorreu um erro ao carregas as informações do bloco");
-            }         
-        );
+        $scope.grafo = GrafoService.getGrafo($scope.bloco.id);
+
+        if ($scope.grafo == undefined)
+        {
+            IndoorService.obterGrafoEdificio($scope.bloco.id).then
+            (
+                function(response) // Sucesso 
+                {
+                    $scope.grafo = response.data;         
+                    $scope.mudarNivel(0);
+                    
+                    $scope.grafo.id = $scope.bloco.id;
+                    GrafoService.putGrafo($scope.grafo);
+                },
+                function(response) // Erro 
+                {
+                    $scope.showAlert("Ocorreu um erro ao carregas as informações do bloco");
+                }
+            );
+        }
+        else
+        {
+            $scope.mudarNivel(0);
+        }
     }
 
     $scope.carregarPlanta = function()
@@ -77,10 +144,7 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPlatform, $ionicLo
         var destino = origem + op;
 
         if (destino >= 0 && destino < andares)
-        {
-            //if ( $scope.pavimento.obj )
-            //    $scope.ambiente.scene.remove( $scope.pavimento.obj );
-            
+        {            
             $scope.ambiente.limpar();
 
             $scope.pavimento = $scope.bloco.pavimentos[destino];
@@ -119,6 +183,38 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPlatform, $ionicLo
         };
 
         $ionicPopup.alert(alertConfig);
+    }
+    
+    $scope.showConfirm = function(titulo, mensagem, fnSim) 
+    {
+        var confirmPopup = $ionicPopup.confirm({
+            title: titulo,
+            template: mensagem,
+            cancelText: 'Não', 
+            okText: 'Sim'
+        });
+
+        confirmPopup.then(function(res) 
+        {
+            if(res) {
+                console.log('Sim');
+                if (fnSim) fnSim();
+            } else {
+                console.log('Não');
+            }
+        });
+    };
+
+    $scope.calcularRota = function() 
+    {
+        if (($scope.origem) && ($scope.destino))
+        {
+            RotaService.putGrafo($scope.grafo);
+            RotaService.calcularCaminho($scope.origem, $scope.destino);
+        }
+        else {
+            $scope.showAlert('Ponto de origem e destino não informados');
+        } 
     }
 
     $ionicPlatform.ready($scope.init);
