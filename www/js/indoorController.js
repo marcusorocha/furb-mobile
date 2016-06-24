@@ -165,12 +165,13 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
         {
             if (value.idPavimento == $scope.pavimento.id)
             {
-                if (value.tipo == 2 || value.tipo == 3)
+                var visivel = (value.tipo == 2 || value.tipo == 3);                                 
                 {
                     var vertice = new Vertice();
                     vertice.fromJSON( value );
-                    $scope.ambiente.scene.add( vertice );                
-                }            
+                    vertice.visible = visivel;
+                    $scope.ambiente.scene.add( vertice );
+                }         
             }
         });
     }
@@ -211,10 +212,27 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
         {
             RotaService.putGrafo($scope.grafo);
             RotaService.calcularCaminho($scope.origem, $scope.destino);
+            
+            $scope.mostrarRota();
         }
         else {
             $scope.showAlert('Ponto de origem e destino não informados');
         } 
+    }
+    
+    $scope.mostrarRota = function()
+    {
+        $scope.ambiente.scene.children.forEach(function(obj) 
+        {
+            if (obj instanceof Vertice)
+            {
+                if (RotaService.temVertice(obj.sid))
+                {            
+                    obj.visible = true;          
+                    obj.alterarCor(0xb00b1e);
+                }
+            }
+        });
     }
 
     $ionicPlatform.ready($scope.init);

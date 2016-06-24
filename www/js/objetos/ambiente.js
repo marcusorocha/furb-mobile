@@ -187,31 +187,46 @@ function AmbienteGrafio( container )
 
         log("stop move");
     }
+    
+    function hasObject(x, y) 
+    {
+        y -= 45; // Descontar o "Header"
+        
+        var ponto = new THREE.Vector2();
+        ponto.x = ( x / width ) * 2 - 1;
+        ponto.y = - ( y / height ) * 2 + 1;
+        
+        raycaster.setFromCamera( ponto, camera.cameraO );
+        var intersects = raycaster.intersectObjects( self.scene.children );
+        if ( intersects.length > 0 )
+        {
+            return intersects[ 0 ].object;            
+        }    
+        return undefined;
+    }
+    
+    function handleObject(x, y) 
+    {
+        if (self.onClickObject)
+        {                
+            var object = hasObject(x, y);
+            if (object)
+            {            
+                self.onClickObject(object, event);
+                return true;
+            }
+        }
+        return false;
+    }
 
     function onMouseDown( event )
     {
-        event.preventDefault();
+        event.preventDefault();        
         
-        if (self.onClickObject)
-        {
-            var x = event.clientX;
-            var y = event.clientY - 45;
-            
-            var mouse = new THREE.Vector2();
-            mouse.x = ( x / width ) * 2 - 1;
-		    mouse.y = - ( y / height ) * 2 + 1;
-            
-            raycaster.setFromCamera( mouse, camera.cameraO );
-            var intersects = raycaster.intersectObjects( self.scene.children );
-            if ( intersects.length > 0 )
-            {
-                var intersect = intersects[ 0 ];
-                self.onClickObject(intersect.object, event);
-                return;
-            }
+        if (!handleObject(event.clientX, event.clientY))
+        {        
+            startMove( event.clientX, event.clientY );            
         }
-        
-        startMove( event.clientX, event.clientY );
     }
 
     function onMouseMove( event )
@@ -232,8 +247,11 @@ function AmbienteGrafio( container )
         {
             var x = event.touches[ 0 ].pageX;
             var y = event.touches[ 0 ].pageY;
-
-            startMove( x, y );
+            
+            if (!handleObject(x, y))
+            {
+                startMove( x, y );
+            }
         }
 
         if (event.touches.length == 2)

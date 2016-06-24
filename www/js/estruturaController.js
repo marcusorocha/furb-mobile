@@ -10,9 +10,20 @@ strCtrlModule.controller('CampusesCtrl', function($scope, $ionicLoading, Estrutu
     $ionicLoading.hide();
   },
   function() 
-  {
+  {        
     $ionicLoading.hide();
+    $scope.showAlert("Houve um erro ao carregar a lista de campus. Infelizmente o servidor parece estar indisponível.")
   });
+  
+  $scope.showAlert = function(msg)
+  {
+    var alertConfig = {
+      title: 'Atenção!',
+      template: msg
+    };
+
+    $ionicPopup.alert(alertConfig);
+  }
     
 });
 

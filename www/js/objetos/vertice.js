@@ -18,6 +18,16 @@ var Vertice = function()
 Vertice.prototype = Object.create( THREE.Mesh.prototype );
 Vertice.prototype.constructor = Vertice;
 
+Vertice.prototype.alterarCor = function( cor ) 
+{
+    this.material = new THREE.MeshBasicMaterial( { color: cor } );
+};
+
+Vertice.prototype.restaurarCor = function() 
+{
+    this.material = new THREE.MeshBasicMaterial( { color: 0x000000 } );
+};
+
 Vertice.prototype.addAresta = function( aresta ) 
 {
     this.arestas.push( aresta );

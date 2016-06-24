@@ -53,6 +53,7 @@ app.factory('RotaService', function(DijkstraService)
     caminho: [],
     origem: { },
     destino: { },
+    posicao: 0,
 
     getGrafo: function ()
     {
@@ -64,14 +65,9 @@ app.factory('RotaService', function(DijkstraService)
       this.grafo = grafo;
     },
 
-    getVertice: function (id)
+    temVertice: function (id)
     {
-        var index = this.getVerticeIndex(id);
-
-        if (index > -1)
-            return angular.copy(this.caminho[index]);
-        else
-            return { };
+        return (this.getVerticeIndex(id) > -1) ? true : false;        
     },
 
     getVerticeIndex: function (id)
@@ -91,9 +87,8 @@ app.factory('RotaService', function(DijkstraService)
     calcularCaminho: function(origem, destino) 
     {
       this.origem = origem;      
-      this.destino = destino;      
-
-      DijkstraService.menorCaminhoGrafo(this.grafo, origem.id, destino.id);
+      this.destino = destino;
+      this.caminho = DijkstraService.menorCaminhoGrafo(this.grafo, origem.id, destino.id);
     }
   }
 });
@@ -115,7 +110,7 @@ app.factory('DijkstraService', function() {
 		
 		service.calcularCaminhos(grafo, idxOrigem, d, p);
 		
-		var caminho = [];
+		var caminho = [];    
 		
 		var custo = d[idxDestino];
 		var vPai = idxDestino;
@@ -125,20 +120,24 @@ app.factory('DijkstraService', function() {
 			caminho.push(v);
 			vPai = p[vPai];
 		} 
-		while (vPai > -1);    
+		while (vPai > -1);
+    
+    var rota = angular.copy(caminho);
 		
     var saida = '';
-		while (caminho.length != 0)
+		while (rota.length != 0)
 		{
-			var v = caminho.pop();
+			var v = rota.pop();
 			saida += v.id;
 			
-			if (caminho.length != 0)
+			if (rota.length != 0)
 			  saida += " -> ";
 		}
 		
 		console.log("Caminho mínimo: " + saida);
 		console.log("Custo: " + custo);
+    
+    return caminho;
 	}
 
   service.getVertice = function (grafo, id)
