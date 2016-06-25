@@ -4,6 +4,8 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
     $scope.bloco = bloco.data;
     $scope.ambiente = null;
     $scope.grafo = { };
+    $scope.lugares = null;
+    $scope.rota = null;
     
     // Variáveis para definição de rotas
     $scope.origem = null;
@@ -11,17 +13,19 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
 
     $scope.init = function()
     {
-        var container = document.getElementById('container');
+        var mapa = document.getElementById('mapa');
+        var rota = document.getElementById('rota');
+        var alturaMapa = window.innerHeight - rota.offsetHeight - 44;
+
+        mapa.style.height = alturaMapa + "px";
 
         $scope.pavimento = $scope.bloco.pavimentos[0];
 
-        $scope.ambiente = new AmbienteGrafio(container);
+        $scope.ambiente = new AmbienteGrafico(mapa);
         $scope.ambiente.onClickObject = function(obj, event) 
         {
             if (obj instanceof Vertice)
             {
-                //alert(obj.descricao);
-                
                 if ($scope.origem)
                 {
                     if (obj.sid == $scope.origem.id)
@@ -31,8 +35,9 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
                         
                         $scope.showConfirm(titulo, msg, function() 
                         {
-                            // Somente entra quando for "Sim" 
+                            // Somente entra quando for "Sim"                                                        
                             $scope.origem = null;
+                            obj.desmarcar();
                         });
                     } 
                     else 
@@ -45,7 +50,8 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
                             $scope.showConfirm(titulo, msg, function() 
                             {
                                 // Somente entra quando for "Sim" 
-                                $scope.destino = null;       
+                                $scope.destino = null;
+                                obj.desmarcar();
                             });
                         }
                         else
@@ -55,8 +61,12 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
                             
                             $scope.showConfirm(titulo, msg, function() 
                             {
+                                // Limpar o destino atual caso existir
+                                $scope.limparDestino();
+
                                 // Somente entra quando for "Sim" 
-                                $scope.destino = obj.toJSON();       
+                                $scope.destino = obj.toJSON();
+                                obj.marcar();
                             });
                         }
                     }
@@ -69,7 +79,8 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
                     $scope.showConfirm(titulo, msg, function() 
                     {
                         // Somente entra quando for "Sim" 
-                        $scope.origem = obj.toJSON();       
+                        $scope.origem = obj.toJSON();
+                        obj.marcar();
                     });
                 }
             }
@@ -156,24 +167,35 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
             }
             
             $scope.mostrarLugares();
+            $scope.mostrarRota();
         }
     }
     
     $scope.mostrarLugares = function()
     {
+        if ($scope.lugares)
+            $scope.ambiente.scene.remove($scope.lugares);
+
+        $scope.lugares = new THREE.Object3D;
+
         $scope.grafo.vertices.forEach(function(value) 
         {
             if (value.idPavimento == $scope.pavimento.id)
             {
-                var visivel = (value.tipo == 2 || value.tipo == 3);                                 
-                {
-                    var vertice = new Vertice();
-                    vertice.fromJSON( value );
-                    vertice.visible = visivel;
-                    $scope.ambiente.scene.add( vertice );
-                }         
+                var isLugar = (value.tipo == 2 || value.tipo == 3);                
+                var marcado = $scope.isOrigemOrDestino( value );
+
+                var vertice = new Vertice();
+                vertice.fromJSON( value );
+                vertice.alterarCor(0xb00b1e);
+                vertice.setMarcado( marcado );
+                vertice.visible = isLugar; 
+
+                $scope.lugares.add( vertice );
             }
         });
+
+        $scope.ambiente.scene.add( $scope.lugares );
     }
     
     $scope.showAlert = function(msg)
@@ -197,7 +219,7 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
 
         confirmPopup.then(function(res) 
         {
-            if(res) {
+            if (res) {
                 console.log('Sim');
                 if (fnSim) fnSim();
             } else {
@@ -208,7 +230,14 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
 
     $scope.calcularRota = function() 
     {
-        if (($scope.origem) && ($scope.destino))
+        if ($scope.rota)
+        {
+            RotaService.limpar();
+            $scope.limparOrigem();
+            $scope.limparDestino();
+            $scope.mostrarRota();
+        }
+        else if (($scope.origem) && ($scope.destino))
         {
             RotaService.putGrafo($scope.grafo);
             RotaService.calcularCaminho($scope.origem, $scope.destino);
@@ -217,22 +246,115 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
         }
         else {
             $scope.showAlert('Ponto de origem e destino não informados');
-        } 
+        }
     }
     
     $scope.mostrarRota = function()
     {
-        $scope.ambiente.scene.children.forEach(function(obj) 
+        if ($scope.rota)
         {
-            if (obj instanceof Vertice)
+            $scope.ambiente.scene.remove($scope.rota);
+            $scope.rota = null;
+        }
+
+        if (RotaService.calculado)
+        {
+            $scope.rota = new THREE.Object3D;
+
+            var caminho = angular.copy(RotaService.caminho); 
+
+            for (var i = 1; i < caminho.length; i++) 
             {
-                if (RotaService.temVertice(obj.sid))
-                {            
-                    obj.visible = true;          
-                    obj.alterarCor(0xb00b1e);
+                var vA = caminho[i - 1];
+                var vB = caminho[i];
+
+                var pontoA = $scope.obterPontoDoMapa( vA );
+                var pontoB = $scope.obterPontoDoMapa( vB );
+
+                if ((pontoA) && (pontoB))
+                {
+                    var posicaoA = pontoA.obterPosicao();
+                    var posicaoB = pontoB.obterPosicao();
+
+                    posicaoA.z -= 0.1;
+                    posicaoB.z -= 0.1;
+
+                    var linha = $scope.desenhaLinhaPontilhada(0xffaa00, posicaoA, posicaoB );
+
+                    $scope.rota.add( linha );
                 }
-            }
-        });
+            };
+
+            $scope.ambiente.scene.add( $scope.rota );
+        }
+        $scope.atualizarRotuloBotaoRota();
+    }
+
+    $scope.isOrigemOrDestino = function( vertice )
+    {
+        if ($scope.origem)
+            if (vertice.id == $scope.origem.id)
+                return true; 
+        
+        if ($scope.destino)
+            if (vertice.id == $scope.destino.id)
+                return true;
+
+        return false;
+    }
+
+    $scope.obterPontoDoMapa = function( vertice )
+    {
+        for (var i in $scope.lugares.children) 
+        {
+            var ponto = $scope.lugares.children[i];
+
+            if (ponto.sid == vertice.id)
+                return ponto;
+        }
+        return undefined;
+    }
+
+    // Desenha uma linha pontilhada
+	$scope.desenhaLinhaPontilhada = function( cor, pontoA, pontoB )
+	{
+        var material_linha = new THREE.LineDashedMaterial({ color: cor, dashSize: 0.5, gapSize: 0.5, linewidth: 3 });
+		var geometry_linha = new THREE.Geometry();
+
+		geometry_linha.vertices.push(pontoA, pontoB);
+        geometry_linha.computeLineDistances();
+
+		var linha_pontilhada = new THREE.Line( geometry_linha, material_linha );
+
+		return linha_pontilhada;
+	}
+
+    $scope.atualizarRotuloBotaoRota = function() 
+    {        
+        if ($scope.rota)
+            $scope.rotuloBotaoRota = 'Limpar Rota';
+        else
+            $scope.rotuloBotaoRota = 'Calcular Rota';        
+    }
+    
+    $scope.limparOrigem = function() 
+    {
+        if ($scope.origem)
+        {
+            var pOrigem = $scope.obterPontoDoMapa($scope.origem);
+            pOrigem.desmarcar();
+            $scope.origem = null;
+        }    
+    }
+
+    $scope.limparDestino = function() 
+    {
+        if ($scope.destino)
+        {
+            var pDestino = $scope.obterPontoDoMapa($scope.destino);
+            pDestino.desmarcar();
+            $scope.destino = null;
+        } 
     }
 
     $ionicPlatform.ready($scope.init);

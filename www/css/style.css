@@ -1,5 +1,5 @@
 /* Empty. Add your own CSS if you like */
-#map, #container {
+#map {
     height: 100%;
     width: 100%;
 }
@@ -29,29 +29,50 @@
 
 #niveis {
     position: absolute;
-    width: 30px;
+    width: 35px;
     top: 15px;
     left: 15px;
     text-align: center;
-    font-size: 20px;
+    font-size: 22px;
     box-shadow: 0px 0px 4px grey;
 }
 
 #niveis > ul > li {
     color: black;
     background-color: white;
-    padding: 5px;
+    padding: 7px;
 }
 
 #niveis > ul > li > a {
     text-decoration: none;
 }
 
+#mapa {
+    width: 100%;
+}
+
 #rota {
-    position: absolute;
-    width: 250px;
-    top: 15px;
-    left: 55px;
-    background-color: white;
-    box-shadow: 0px 0px 4px grey;
+    width: 100%px;
+    height: 60px;
+    background-color: #f8f8f8;
+    border-top: 1px solid gray;
+}
+
+#rota ul {
+    float: left;
+    margin-left: 5px;
+}
+
+#rota ul li {
+    line-height: 29px;
+}
+
+#rota button {
+    /*position: relative;*/
+    float: right;
+    height: 60px;
+    width: 80px;
+    border: none;
+    background-color: dodgerblue;
+    color: white;
 }

@@ -1,4 +1,4 @@
-function AmbienteGrafio( container )
+function AmbienteGrafico( container )
 {
     var self = this;
     var camera, renderer;
@@ -197,7 +197,7 @@ function AmbienteGrafio( container )
         ponto.y = - ( y / height ) * 2 + 1;
         
         raycaster.setFromCamera( ponto, camera.cameraO );
-        var intersects = raycaster.intersectObjects( self.scene.children );
+        var intersects = raycaster.intersectObjects( self.scene.children, true );
         if ( intersects.length > 0 )
         {
             return intersects[ 0 ].object;            

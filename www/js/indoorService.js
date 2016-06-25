@@ -54,6 +54,7 @@ app.factory('RotaService', function(DijkstraService)
     origem: { },
     destino: { },
     posicao: 0,
+    calculado: false,
 
     getGrafo: function ()
     {
@@ -89,6 +90,15 @@ app.factory('RotaService', function(DijkstraService)
       this.origem = origem;      
       this.destino = destino;
       this.caminho = DijkstraService.menorCaminhoGrafo(this.grafo, origem.id, destino.id);
+      this.calculado = true;
+    },
+
+    limpar: function()
+    {
+      this.origem = { },
+      this.destino = { },
+      this.caminho = [];
+      this.calculado = false;
     }
   }
 });

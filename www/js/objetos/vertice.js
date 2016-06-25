@@ -11,6 +11,15 @@ var Vertice = function()
     this.geometry = new THREE.CircleGeometry( 1, 32 );
     this.material = new THREE.MeshBasicMaterial( { color: 0x000000 } );
     this.selecionavel = true;
+
+    this.marcacao = new THREE.Line();
+    this.marcacao.geometry = new THREE.CircleGeometry( 1.2, 32 );
+    this.marcacao.material = new THREE.LineBasicMaterial( { color: 0x000000 } );
+    this.marcacao.visible = false;
+    // Remover o vertice do centro.
+    this.marcacao.geometry.vertices.shift();
+    
+    this.add( this.marcacao );
     
     console.log("vertice criado");    
 };
@@ -26,6 +35,21 @@ Vertice.prototype.alterarCor = function( cor )
 Vertice.prototype.restaurarCor = function() 
 {
     this.material = new THREE.MeshBasicMaterial( { color: 0x000000 } );
+};
+
+Vertice.prototype.setMarcado = function( valor ) 
+{
+    this.marcacao.visible = valor;
+};
+
+Vertice.prototype.marcar = function() 
+{
+    this.setMarcado(true);
+};
+
+Vertice.prototype.desmarcar = function() 
+{
+    this.setMarcado(false);
 };
 
 Vertice.prototype.addAresta = function( aresta ) 

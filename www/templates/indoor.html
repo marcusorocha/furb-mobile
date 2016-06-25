@@ -7,15 +7,17 @@
                 <li> {{ pavimento.nivel }} </li>
                 <li ng-click="mudarNivel(-1)"> - </li>
             </ul>
-        </div>
-        
-        <div id="rota">
-            <span>Origem: {{ origem.descricao }}</span>
-            <span>Destino: {{ destino.descricao }}</span>
-            <button ng-click="calcularRota()">Calcular Rota</button>
-        </div>
+        </div>        
 
-        <div id="container"></div>
+        <div id="mapa"></div>
+
+        <div id="rota">
+            <ul>
+                <li>Origem: {{ origem.descricao }}</li>
+                <li>Destino: {{ destino.descricao }}</li>
+            </ul>
+            <button ng-click="calcularRota()">{{ rotuloBotaoRota }}</button>
+        </div>
         
     </ion-content>
 </ion-view>
