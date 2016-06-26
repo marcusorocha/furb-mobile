@@ -79,7 +79,7 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $filter, $stateParams, $
         {
             $scope.carregarBloco(lugar.idEdificio, lugar.idPavimento, lugar.id);
         }
-        else if ($scope.pavimento.id != lugar.idPavimento)
+        else
         {
             $scope.carregarPavimento(lugar.idPavimento, lugar.id);
         }
