@@ -1,28 +1,43 @@
-app.factory('EstruturaService', function($http)
+app.factory('EstruturaService', function ($http) 
 {
-  var url = api + "/estrutura";
+    var url = api + "/estrutura";
 
-  var service = { };
+    var service = {};
 
-  service.obterEstrutura = function (q)
-  {
-    return $http.get(url + "/campus");
-  };
+    service.obterEstrutura = function () 
+    {
+        return $http.get(url + '/obter');
+    };
 
-  service.obterCampus = function (id)
-  {
-      return $http.get(url + "/campus/" + id);
-  };
+    service.obterCampuses = function (q) 
+    {        
+        return $http.get(url + "/campus");
+    };
 
-  service.obterBlocos = function (id)
-  {
-      return $http.get(url + "/campus/" + id + "/blocos");
-  };
+    service.obterCampus = function (id) 
+    {
+        return $http.get(url + "/campus/" + id);
+    };
 
-  service.obterBloco = function (id)
-  {
-      return $http.get(url + "/blocos/" + id);
-  };
+    service.obterBlocos = function (id) 
+    {
+        return $http.get(url + "/campus/" + id + "/blocos");
+    };
 
-  return service;
+    service.obterBloco = function (id) 
+    {
+        return $http.get(url + "/blocos/" + id);
+    };
+
+    service.obterLugares = function (q) 
+    {
+        return $http.get(url + "/lugares");
+    };
+
+    service.obterPorCoordenadas = function (latitude, longitude) 
+    {
+        return $http.get(url + "/coordenadas/" + latitude + "/" + longitude);
+    };
+
+    return service;
 });

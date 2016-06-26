@@ -28,131 +28,54 @@ app.config(function($stateProvider, $urlRouterProvider) {
 
     $stateProvider
 
-        /*
-        .state('welcome', {
-            url: '/welcome',
-            templateUrl: "templates/welcome.html",
-            controller: 'WelcomeCtrl'
-        })
-        */
-        .state('app', {
-            url: '/app',
-            abstract: true,
-            templateUrl: 'templates/menu.html',
-            controller: 'AppCtrl'
-        })
+    .state('app', {
+        url: '/app',
+        abstract: true,
+        templateUrl: 'templates/menu.html',
+        controller: 'AppCtrl'
+    })
 
-        .state('app.home', {
-            url: '/home',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/home.html',
-                    controller: 'HomeCtrl'
-                }
+    .state('app.mapa', {
+        url: '/mapa',
+        views: {
+            'menuContent': {
+                templateUrl: 'templates/mapa.html',
+                controller: 'MapaCtrl'
             }
-        })
+        }
+    })
 
-        .state('app.mapa', {
-            url: '/mapa',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/mapa.html',
-                    controller: 'MapaCtrl'
-                }
+    .state('app.geolocation', {
+        url: '/geolocation',
+        views: {
+            'menuContent': {
+                templateUrl: 'templates/geolocation.html',
+                controller: 'GeolocationCtrl'
             }
-        })
-        /*
-        .state('app.indoor', {
-            url: '/indoor',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/indoor.html',
-                    controller: 'IndoorCtrl'
-                }
-            }
-        })
-        */
-        .state('app.geolocation', {
-            url: '/geolocation',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/geolocation.html',
-                    controller: 'GeolocationCtrl'
-                }
-            }
-        })
+        }
+    })
 
-        .state('app.playlists', {
-            url: '/playlists',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/playlists.html',
-                    controller: 'PlaylistsCtrl',
-                    resolve: {
-                        playlists: function(PlaylistService) {
-                            return PlaylistService.getPlaylists()
-                        }
-                    }
-                }
+    .state('app.indoor', {
+        url: '/indoor',
+        views: {
+            'menuContent': {
+                templateUrl: 'templates/indoor.html',
+                controller: 'IndoorCtrl'
             }
-        })
+        }
+    })  
 
-        .state('app.single', {
-            url: '/playlists/:playlistId',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/playlist.html',
-                    controller: 'PlaylistCtrl',
-                    resolve: {
-                        playlist: function($stateParams, PlaylistService) {
-                            return PlaylistService.getPlaylist($stateParams.playlistId)
-                        }
-                    }
-                }
+    /*
+    .state('app.indoor', {
+        url: '/indoor/:blocoId',
+        views: {
+            'menuContent': {
+                templateUrl: 'templates/indoor.html',
+                controller: 'IndoorCtrl'
             }
-        })
+        }
+    })*/;
 
-        .state('app.campuses', {
-            url: '/indoor',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/campuses.html',
-                    controller: 'CampusesCtrl'
-                }
-            }
-        })
-
-        .state('app.blocos', {
-            url: '/indoor/:campusId',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/blocos.html',
-                    controller: 'BlocosCtrl',
-                    resolve: {
-                        campusId: function($stateParams) {
-                            return $stateParams.campusId;
-                        }
-                    }
-                }
-            }
-        })
-
-        .state('app.indoor', {
-            url: '/indoor/blocos/:blocoId',
-            views: {
-                'menuContent': {
-                    templateUrl: 'templates/indoor.html',
-                    controller: 'IndoorCtrl',
-                    resolve: {
-                        bloco: function($stateParams, EstruturaService) {
-                            return EstruturaService.obterBloco($stateParams.blocoId);
-                        }
-                    }
-                }
-            }
-        });
-
-    // if none of the above states are matched, use this as the fallback
-    //$urlRouterProvider.otherwise('/welcome');
-    $urlRouterProvider.otherwise('/app/playlists');
+    // if none of the above states are matched, use this as the fallback    
+    $urlRouterProvider.otherwise('/app/indoor');
 });

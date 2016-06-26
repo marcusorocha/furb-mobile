@@ -1,109 +1,148 @@
-strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPlatform, $ionicLoading, $ionicPopup, IndoorService, GrafoService, RotaService, bloco)
+strCtrlModule.controller('IndoorCtrl', function($scope, $filter, $stateParams, $ionicPopover, $ionicActionSheet, $ionicModal, $ionicPlatform, $ionicLoading, $ionicPopup, $cordovaGeolocation, IndoorService, GrafoService, RotaService, EstruturaService)
 {
-    $scope.pavimento = { };
-    $scope.bloco = bloco.data;
+    $scope.pavimento = { }; 
     $scope.ambiente = null;
     $scope.grafo = { };
     $scope.lugares = null;
     $scope.rota = null;
+    $scope.posicao = null;
+    $scope.pontosRelevantes = null;
     
     // Variáveis para definição de rotas
     $scope.origem = null;
     $scope.destino = null;
 
+    $ionicModal.fromTemplateUrl('pesquisa-modal.html', 
+    {
+        scope: $scope,
+        animation: 'slide-in-up'
+    })
+    .then(function(modal) 
+    {
+        $scope.modal = modal;
+    });
+
+    $scope.openModal = function() 
+    {
+        $scope.pesquisa = {};
+        $scope.modal.show();
+    }
+
+    $scope.closeModal = function() 
+    {
+        $scope.modal.hide();
+    }
+
+    // Cleanup the modal when we're done with it!
+    $scope.$on('$destroy', function() 
+    {
+        $scope.modal.remove();
+    });
+
+    $scope.$on('mostrarBloco', function (event, args) 
+    {
+        $scope.carregarBloco(args.blocoId);
+    });
+
     $scope.init = function()
     {
         var mapa = document.getElementById('mapa');
-        var rota = document.getElementById('rota');
-        var alturaMapa = window.innerHeight - rota.offsetHeight - 44;
+        //var rota = document.getElementById('rota');
+        //var alturaMapa = window.innerHeight - rota.offsetHeight - 44;
+        var alturaMapa = window.innerHeight - 88;
 
-        mapa.style.height = alturaMapa + "px";
-
-        $scope.pavimento = $scope.bloco.pavimentos[0];
+        mapa.style.height = alturaMapa + "px"; 
 
         $scope.ambiente = new AmbienteGrafico(mapa);
         $scope.ambiente.onClickObject = function(obj, event) 
         {
             if (obj instanceof Vertice)
             {
-                if ($scope.origem)
-                {
-                    if (obj.sid == $scope.origem.id)
-                    {
-                        var titulo = 'Origem';
-                        var msg = 'Deseja desmarcar o(a) ' + obj.descricao + ' como origem de sua rota ?';
-                        
-                        $scope.showConfirm(titulo, msg, function() 
-                        {
-                            // Somente entra quando for "Sim"                                                        
-                            $scope.origem = null;
-                            obj.desmarcar();
-                        });
-                    } 
-                    else 
-                    {
-                        if (($scope.destino) && (obj.sid == $scope.origem.id))
-                        {
-                            var titulo = 'Destino';
-                            var msg = 'Deseja desmarcar o(a) ' + obj.descricao + ' como destino de sua rota ?';
-                            
-                            $scope.showConfirm(titulo, msg, function() 
-                            {
-                                // Somente entra quando for "Sim" 
-                                $scope.destino = null;
-                                obj.desmarcar();
-                            });
-                        }
-                        else
-                        {
-                            var titulo = 'Destino';
-                            var msg = 'Deseja marcar o(a) ' + obj.descricao + ' como destino de sua rota ?';
-                            
-                            $scope.showConfirm(titulo, msg, function() 
-                            {
-                                // Limpar o destino atual caso existir
-                                $scope.limparDestino();
-
-                                // Somente entra quando for "Sim" 
-                                $scope.destino = obj.toJSON();
-                                obj.marcar();
-                            });
-                        }
-                    }
-                }
-                else
-                {
-                    var titulo = 'Origem';
-                    var msg = 'Deseja marcar o(a) ' + obj.descricao + ' como origem de sua rota ?';
-                    
-                    $scope.showConfirm(titulo, msg, function() 
-                    {
-                        // Somente entra quando for "Sim" 
-                        $scope.origem = obj.toJSON();
-                        obj.marcar();
-                    });
-                }
+                $scope.mostrarAcoesVertice(obj);                
             }
         }
 
-        $scope.carregarGrafo();
+        $scope.carregarBloco($stateParams.blocoId);
     }
-    
-    $scope.carregarGrafo = function() 
+
+    $scope.pesquisar = function()
     {
-        $scope.grafo = GrafoService.getGrafo($scope.bloco.id);
+        $scope.openModal();
+        $scope.carregarLugares();
+    }
+
+    $scope.mostrarLugar = function(lugar)
+    {
+        $scope.closeModal();
+
+        if ($scope.bloco.id != lugar.idEdificio)
+        {
+            $scope.carregarBloco(lugar.idEdificio, lugar.idPavimento, lugar.id);
+        }
+        else if ($scope.pavimento.id != lugar.idPavimento)
+        {
+            $scope.carregarPavimento(lugar.idPavimento, lugar.id);
+        }
+    }
+
+    $scope.carregarBloco = function(blocoId, pavimentoId, verticeId)
+    {
+        if ((blocoId) && (blocoId != 0))
+        {
+            EstruturaService.obterBloco(blocoId).then
+            (
+                function(response) // Sucesso
+                {
+                    $scope.bloco = response.data;
+                    $scope.bloco.pavimentos = $filter('orderBy')($scope.bloco.pavimentos, 'indice');
+
+                    $scope.carregarGrafo(blocoId, pavimentoId, verticeId);                
+                },
+                function(response)
+                {
+                    $scope.showAlert("Ocorreu um erro ao carregas as informações do bloco");
+                }
+            );
+        }
+        else
+        {
+            EstruturaService.obterEstrutura().then
+            (
+                function(response) // Sucesso
+                {
+                    var estrutura = response.data;
+                    estrutura = $filter('orderBy')(estrutura, 'nome');
+                    var blocos = estrutura[0].edificios;
+                    blocos = $filter('orderBy')(blocos, 'nome');
+                    
+                    $scope.bloco = blocos[0];
+                    $scope.bloco.pavimentos = $filter('orderBy')($scope.bloco.pavimentos, 'indice');
+
+                    $scope.carregarGrafo($scope.bloco.id);
+                },
+                function(response)
+                {
+                    $scope.showAlert("Ocorreu um erro ao carregas as informações do bloco");
+                }
+            );
+        }
+    }    
+    
+    $scope.carregarGrafo = function(blocoId, pavimentoId, verticeId)
+    {
+        $scope.grafo = GrafoService.getGrafo(blocoId);
 
         if ($scope.grafo == undefined)
         {
-            IndoorService.obterGrafoEdificio($scope.bloco.id).then
+            IndoorService.obterGrafoEdificio(blocoId).then
             (
                 function(response) // Sucesso 
                 {
-                    $scope.grafo = response.data;         
-                    $scope.mudarNivel(0);
-                    
-                    $scope.grafo.id = $scope.bloco.id;
-                    GrafoService.putGrafo($scope.grafo);
+                    $scope.grafo = response.data;                    
+                    $scope.grafo.id = blocoId;
+                    GrafoService.putGrafo($scope.grafo);                    
+
+                    $scope.carregarPavimento(pavimentoId, verticeId);
                 },
                 function(response) // Erro 
                 {
@@ -113,8 +152,29 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
         }
         else
         {
-            $scope.mudarNivel(0);
+            $scope.carregarPavimento(pavimentoId, verticeId);            
         }
+    }
+
+    $scope.carregarPavimento = function(pavimentoId, verticeId) 
+    {
+        var indice = 0;
+
+        if (pavimentoId)
+        {
+            var pavimento = $scope.bloco.pavimentos.find(function(p) { return p.id == this; }, pavimentoId);
+            if (pavimento)
+            {
+                indice = pavimento.indice - 1;
+            }
+        }
+
+        if (verticeId)
+        {
+            $scope.destino = $scope.grafo.vertices.find(function(v) { return v.id == this; }, verticeId);
+        }
+
+        $scope.mostrarNivel( indice );
     }
 
     $scope.carregarPlanta = function()
@@ -126,7 +186,7 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
         var onProgress = function ( xhr ) {
             if ( xhr.lengthComputable ) {
                 var percentComplete = xhr.loaded / xhr.total * 100;
-                log( Math.round(percentComplete, 2) + '% downloaded' );
+                console.log( Math.round(percentComplete, 2) + '% downloaded' );
             }
         };
 
@@ -148,6 +208,24 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
         }, onProgress, onError);
     }
 
+    $scope.carregarLugares = function() 
+    {
+        $ionicLoading.show({
+           template: 'Carregando lugares...'
+        });
+
+        EstruturaService.obterLugares().then(function(response) 
+        {
+            $scope.lugares = response.data;
+            $ionicLoading.hide();
+        },
+        function() 
+        {        
+            $ionicLoading.hide();
+            $scope.showAlert("Houve um erro ao carregar a lista de campus. Infelizmente o servidor parece estar indisponível.")
+        });        
+    }
+
     $scope.mudarNivel = function(op)
     {
         var andares = $scope.bloco.pavimentos.length;
@@ -156,34 +234,39 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
 
         if (destino >= 0 && destino < andares)
         {            
-            $scope.ambiente.limpar();
-
-            $scope.pavimento = $scope.bloco.pavimentos[destino];
-
-            if ( $scope.pavimento.obj ) {
-                $scope.ambiente.scene.add( $scope.pavimento.obj );
-            } else {
-                $scope.carregarPlanta();
-            }
-            
-            $scope.mostrarLugares();
-            $scope.mostrarRota();
+            $scope.mostrarNivel( destino );
         }
     }
-    
-    $scope.mostrarLugares = function()
-    {
-        if ($scope.lugares)
-            $scope.ambiente.scene.remove($scope.lugares);
 
-        $scope.lugares = new THREE.Object3D;
+    $scope.mostrarNivel = function( indice )
+    {
+        $scope.ambiente.limpar();
+
+        $scope.pavimento = $scope.bloco.pavimentos[indice];
+
+        if ( $scope.pavimento.obj ) {
+            $scope.ambiente.scene.add( $scope.pavimento.obj );
+        } else {
+            $scope.carregarPlanta();
+        }
+        
+        $scope.mostrarPontosRelevantes();
+        $scope.mostrarRota();
+    }
+    
+    $scope.mostrarPontosRelevantes = function()
+    {
+        if ($scope.pontosRelevantes)
+            $scope.ambiente.scene.remove($scope.pontosRelevantes);
+
+        $scope.pontosRelevantes = new THREE.Object3D;
 
         $scope.grafo.vertices.forEach(function(value) 
         {
             if (value.idPavimento == $scope.pavimento.id)
             {
                 var isLugar = (value.tipo == 2 || value.tipo == 3);                
-                var marcado = $scope.isOrigemOrDestino( value );
+                var marcado = $scope.isOrigemOrDestino( value.id );
 
                 var vertice = new Vertice();
                 vertice.fromJSON( value );
@@ -191,11 +274,11 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
                 vertice.setMarcado( marcado );
                 vertice.visible = isLugar; 
 
-                $scope.lugares.add( vertice );
+                $scope.pontosRelevantes.add( vertice );
             }
         });
 
-        $scope.ambiente.scene.add( $scope.lugares );
+        $scope.ambiente.scene.add( $scope.pontosRelevantes );
     }
     
     $scope.showAlert = function(msg)
@@ -232,21 +315,33 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
     {
         if ($scope.rota)
         {
-            RotaService.limpar();
-            $scope.limparOrigem();
-            $scope.limparDestino();
-            $scope.mostrarRota();
+            $scope.limparRota(true);
         }
         else if (($scope.origem) && ($scope.destino))
         {
             RotaService.putGrafo($scope.grafo);
             RotaService.calcularCaminho($scope.origem, $scope.destino);
             
-            $scope.mostrarRota();
+            $scope.posicao = RotaService.getVerticePosicao();
+            $scope.mostrarRota();                    
+            $scope.mostrarPavimentoPosicaoNavegacao();
         }
         else {
             $scope.showAlert('Ponto de origem e destino não informados');
         }
+    }
+
+    $scope.limparRota = function( limparMarcacoes ) 
+    {        
+        $scope.restaurarPontoNavegado();
+        $scope.posicao = null;        
+        if (limparMarcacoes)
+        {
+            $scope.limparOrigem();
+            $scope.limparDestino();
+        }
+        RotaService.limpar();
+        $scope.mostrarRota();        
     }
     
     $scope.mostrarRota = function()
@@ -286,28 +381,33 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
             };
 
             $scope.ambiente.scene.add( $scope.rota );
+            $scope.mostrarPosicaoNavegacao();
         }
-        $scope.atualizarRotuloBotaoRota();
     }
 
-    $scope.isOrigemOrDestino = function( vertice )
+    $scope.isOrigemOrDestino = function( verticeId )
+    {
+        return ($scope.getOrigemOrDestino( verticeId ) > 0);
+    }
+
+    $scope.getOrigemOrDestino = function( verticeId )
     {
         if ($scope.origem)
-            if (vertice.id == $scope.origem.id)
-                return true; 
+            if (verticeId == $scope.origem.id)
+                return 1; 
         
         if ($scope.destino)
-            if (vertice.id == $scope.destino.id)
-                return true;
+            if (verticeId == $scope.destino.id)
+                return 2;
 
-        return false;
+        return 0;
     }
 
     $scope.obterPontoDoMapa = function( vertice )
     {
-        for (var i in $scope.lugares.children) 
+        for (var i in $scope.pontosRelevantes.children) 
         {
-            var ponto = $scope.lugares.children[i];
+            var ponto = $scope.pontosRelevantes.children[i];
 
             if (ponto.sid == vertice.id)
                 return ponto;
@@ -328,21 +428,13 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
 
 		return linha_pontilhada;
 	}
-
-    $scope.atualizarRotuloBotaoRota = function() 
-    {        
-        if ($scope.rota)
-            $scope.rotuloBotaoRota = 'Limpar Rota';
-        else
-            $scope.rotuloBotaoRota = 'Calcular Rota';        
-    }
     
     $scope.limparOrigem = function() 
     {
         if ($scope.origem)
         {
             var pOrigem = $scope.obterPontoDoMapa($scope.origem);
-            pOrigem.desmarcar();
+            if (pOrigem) pOrigem.desmarcar();
             $scope.origem = null;
         }    
     }
@@ -352,10 +444,224 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $ionicPopover, $ionicPla
         if ($scope.destino)
         {
             var pDestino = $scope.obterPontoDoMapa($scope.destino);
-            pDestino.desmarcar();
+            if (pDestino) pDestino.desmarcar();
             $scope.destino = null;
         } 
     }
+
+    $scope.mostrarAcoesVertice = function( vertice ) 
+    {
+        if ($scope.isOrigemOrDestino(vertice.sid))
+        {
+            $ionicActionSheet.show(
+            {
+                buttons: [ { text: 'Desmarcar' } ],
+                titleText: 'Ações',
+                cancelText: 'Cancelar',
+                cancel: function() { },
+                buttonClicked: function(index) 
+                {
+                    if (index == 0)
+                    {                
+                        $scope.limparRota(false);
+
+                        if ($scope.getOrigemOrDestino( vertice.sid ) == 1)
+                            $scope.limparOrigem();
+                        else
+                            $scope.limparDestino();
+                    }
+                    return true;
+                }
+            });
+        } else {
+            $ionicActionSheet.show(
+            {
+                buttons: [
+                    { text: 'Marcar como Origem' },
+                    { text: 'Marcar como Destino' }
+                ],
+                titleText: 'Ações',
+                cancelText: 'Cancelar',
+                cancel: function() { },
+                buttonClicked: function(index) 
+                {
+                    switch (index)
+                    {
+                        case 0:
+                        {
+                            $scope.selecionarOrigem(vertice);
+                            break;
+                        }
+                        case 1: 
+                        {
+                            $scope.selecionarDestino(vertice);
+                            break;
+                        }
+                    }
+                    return true;
+                }
+            });
+        }
+    };
+
+    $scope.selecionarOrigem = function( vertice ) 
+    {   
+        $scope.limparOrigem();      
+        $scope.origem = vertice.toJSON();
+        vertice.marcar();  
+    };
+
+    $scope.selecionarDestino = function( vertice ) 
+    { 
+        $scope.limparDestino();        
+        $scope.destino = vertice.toJSON();
+        vertice.marcar();  
+    };
+
+    $scope.navegar = function( fator )
+    {
+        $scope.restaurarPontoNavegado();
+        $scope.posicao = RotaService.navegar( fator );        
+        $scope.mostrarPavimentoPosicaoNavegacao();
+
+        console.log("Posicao: " + RotaService.posicao);
+    }
+
+    $scope.restaurarPontoNavegado = function()
+    {
+        if ($scope.posicao)
+        {
+            var ponto = $scope.obterPontoDoMapa( $scope.posicao );
+            if (ponto) 
+            {
+                if ($scope.isOrigemOrDestino($scope.posicao.id)) {
+                    ponto.alterarCor(0xb00b1e);
+                } else {
+                    ponto.visible = false;
+                }
+            }
+        }
+    }
+
+    $scope.mostrarPavimentoPosicaoNavegacao = function() 
+    {
+        if ($scope.posicao.idEdificio != $scope.bloco.id) 
+        {
+            $scope.carregarBloco($scope.posicao.idEdificio, $scope.posicao.idPavimento);
+        } 
+        else if ($scope.posicao.idPavimento != $scope.pavimento.id) 
+        {
+            $scope.carregarPavimento($scope.posicao.idPavimento);
+        } 
+        else 
+        {
+            $scope.mostrarPosicaoNavegacao();
+        }        
+    }
+
+    $scope.mostrarPosicaoNavegacao = function()
+    {
+        if ($scope.posicao)
+        {
+            var pontoP = $scope.obterPontoDoMapa( $scope.posicao );
+            if (pontoP)
+            {
+                pontoP.alterarCor( 0x000000 );
+                pontoP.visible = true;
+            }
+        }
+    }
+
+    $scope.temAnteriorRota = function()
+    {
+        return RotaService.temAnterior();
+    }
+
+    $scope.temProximoRota = function()
+    {
+        return RotaService.temProximo();
+    }
+
+    $scope.temOrigemDestino = function()
+    {
+        return (($scope.origem) && ($scope.destino));
+    }
+
+    $scope.localizar = function()
+    {
+        $ionicLoading.show({ template: 'Buscando localização...' });
+
+        var posOptions = {timeout: 10000, enableHighAccuracy: true};
+
+        $cordovaGeolocation.getCurrentPosition(posOptions).then($scope.onObterPosicao, $scope.onErroPosicao);
+    }
+
+    $scope.onObterPosicao = function(position)
+    {
+        // Aqui processar a posicao
+        //$scope.showAlert('Latitude: ' + $scope.geo.latitude + ' <br/> '
+        //                +'Longitude: ' + $scope.geo.longitude);
+
+        /*
+        var latitude = -26.905734;
+        var longitude = -49.079959;
+        /*/
+        var latitude = position.coords.latitude;
+        var longitude = position.coords.longitude;
+        //*/
+
+        EstruturaService.obterPorCoordenadas(latitude, longitude).then
+        (
+            function(response) // Sucesso 
+            {
+                var bloco = response.data;                
+
+                $scope.carregarBloco(bloco.id);
+                $ionicLoading.hide();
+
+                $scope.showAlert("Você está em " + bloco.nome);
+                
+                /*
+                IndoorService.obterVerticesEdificio(bloco.id).then
+                (
+                    function(response) // Sucesso 
+                    {
+                        var vertices = response.data;
+                        
+                        // aqui filtrar somente os vertices do 1 pavimento ou o atual (decidir);
+                        
+                        for (var v in vertices)
+                        {
+                            //
+                        }
+
+                        //this.custo = new THREE.Line3(posA, posB).distance();                        
+
+                        $scope.carregarBloco(bloco.id);
+                        $ionicLoading.hide();
+                    },
+                    function(response) // Erro 
+                    {
+                        $scope.carregarBloco(bloco.id);
+                        $ionicLoading.hide();                        
+                    }
+                );     
+                */           
+            },
+            function(response) // Erro 
+            {
+                $scope.showAlert(response.data.mensagem);
+                $ionicLoading.hide();
+            }            
+        );        
+    };
+
+    $scope.onErroPosicao = function(erro)
+    {
+        console.log(erro);
+        $scope.showAlert('Ocorreu um erro ao buscar a posição do GSP \n Tente novamente !');
+        $ionicLoading.hide();
+    };
 
     $ionicPlatform.ready($scope.init);
 });

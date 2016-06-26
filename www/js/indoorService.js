@@ -7,6 +7,11 @@ app.factory('IndoorService', function($http)
     return $http.get(api + "/grafo/edificio/" + id);
   };
 
+  service.obterVerticesEdificio = function (id)
+  {
+    return $http.get(api + "/vertice/edificio/" + id);
+  };
+
   return service;
 });
 
@@ -63,15 +68,15 @@ app.factory('RotaService', function(DijkstraService)
 
     putGrafo: function (grafo)
     {
-      this.grafo = grafo;
+      this.grafo = angular.copy(grafo);
     },
 
     temVertice: function (id)
     {
-        return (this.getVerticeIndex(id) > -1) ? true : false;        
+        return (this.getIndexVertice(id) > -1) ? true : false;        
     },
 
-    getVerticeIndex: function (id)
+    getIndexVertice: function (id)
     {
       var index = -1;
 
@@ -85,11 +90,49 @@ app.factory('RotaService', function(DijkstraService)
       return index;
     },
 
+    getVerticePosicao: function()
+    {
+      return this.caminho[this.posicao];
+    },
+
+    goAnterior: function()
+    {
+      if (this.temAnterior())
+      {
+        this.posicao--;
+        return this.getVerticePosicao();
+      }
+    },
+
+    goProximo: function()
+    {
+      if (this.temProximo())
+      {
+        this.posicao++;
+        return this.getVerticePosicao();
+      }
+    },
+
+    temAnterior: function()
+    {
+      return this.posicao > 0;
+    },
+
+    temProximo: function()
+    {
+      return ((this.caminho.length - 1) > this.posicao);
+    },
+
+    navegar: function( op )
+    {
+      return (op > 0) ? this.goProximo() : this.goAnterior();
+    },
+
     calcularCaminho: function(origem, destino) 
     {
-      this.origem = origem;      
-      this.destino = destino;
-      this.caminho = DijkstraService.menorCaminhoGrafo(this.grafo, origem.id, destino.id);
+      this.origem = angular.copy(origem);      
+      this.destino = angular.copy(destino);
+      this.caminho = DijkstraService.menorCaminhoGrafo(this.grafo, destino.id, origem.id);
       this.calculado = true;
     },
 

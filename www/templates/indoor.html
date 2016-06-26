@@ -1,3 +1,24 @@
+<script id="pesquisa-modal.html" type="text/ng-template">
+    <ion-modal-view>
+        <ion-header-bar class="item-input-inset">
+            <label class="item-input-wrapper">
+                <i class="icon ion-ios-search placeholder-icon"></i>            
+                <input type="search" placeholder="Digite um lugar desejado" ng-model="pesquisa.filtro">
+            </label>
+            <button class="button button-clear" ng-click="closeModal()">Cancelar</button>
+        </ion-header-bar>
+        <ion-content>
+            <ion-list>
+                <ion-item 
+                    ng-repeat="lugar in lugares | orderBy: 'descricao' | filter : pesquisa.filtro"
+                    ng-click="mostrarLugar(lugar)">
+                    {{ lugar.identificacao }} - {{ lugar.descricao }}
+                </ion-item>
+            </ion-list>
+        </ion-content>
+    </ion-modal-view>
+</script>
+
 <ion-view view-title="Indoor" cache-view="false">
     <ion-content scroll="false">
         
@@ -11,13 +32,43 @@
 
         <div id="mapa"></div>
 
-        <div id="rota">
-            <ul>
-                <li>Origem: {{ origem.descricao }}</li>
-                <li>Destino: {{ destino.descricao }}</li>
-            </ul>
+        <!-- <div id="rota">
+            
+            <div id="informacoes">
+                <ul>
+                    <li>Origem: {{ origem.descricao }}</li>
+                    <li>Destino: {{ destino.descricao }}</li>
+                </ul>
+            </div>
+
+            <div id="navegacao" class="button-bar">
+                <a class="button">First</a>
+                <a class="button">Second</a>
+                <a class="button">Third</a>
+            </div>
+
             <button ng-click="calcularRota()">{{ rotuloBotaoRota }}</button>
         </div>
+        -->
+        
+        <button id="localiza" class="button icon ion-android-locate" ng-click="localizar()"></button>
+        <button id="pesquisa" class="button icon ion-search" ng-click="pesquisar()"></button>
         
     </ion-content>
+
+    <ion-footer-bar ng-hide="rota" id="informacoes">
+        <ul>
+            <li>Origem: {{ origem.descricao }}</li>
+            <li>Destino: {{ destino.descricao }}</li>
+        </ul>
+        <button class="button pull-right icon-left ion-navigate" ng-click="calcularRota()" ng-disabled="!temOrigemDestino()">Rota</button>
+    </ion-footer-bar>
+
+    <ion-footer-bar ng-show="rota" id="navegacao">
+        <div class="button-bar">
+            <button class="button" ng-click="navegar(-1)" ng-disabled="!temAnteriorRota()">Anterior</button>
+            <button class="button" ng-click="navegar(+1)" ng-disabled="!temProximoRota()">Próximo</button>
+            <button class="button" ng-click="limparRota(true)">Parar</button>
+        </div>
+    </ion-footer-bar>
 </ion-view>
