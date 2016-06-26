@@ -8,9 +8,12 @@ var Vertice = function()
     
     this.type = "Vertice";
     this.arestas = [];
-    this.geometry = new THREE.CircleGeometry( 1, 32 );
+    this.geometry = new THREE.CircleGeometry( 1.3, 32 );
     this.material = new THREE.MeshBasicMaterial( { color: 0x000000 } );
     this.selecionavel = true;
+
+    // User isso se for usar icones
+    //this.material = new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture("crate.gif") });
 
     this.marcacao = new THREE.Line();
     this.marcacao.geometry = new THREE.CircleGeometry( 1.2, 32 );
