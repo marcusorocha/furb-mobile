@@ -15,14 +15,22 @@ var Vertice = function()
     // User isso se for usar icones
     //this.material = new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture("crate.gif") });
 
-    this.marcacao = new THREE.Line();
-    this.marcacao.geometry = new THREE.CircleGeometry( 1.2, 32 );
-    this.marcacao.material = new THREE.LineBasicMaterial( { color: 0x000000 } );
-    this.marcacao.visible = false;
+    this.borda = new THREE.Line();
+    this.borda.geometry = new THREE.CircleGeometry( 1.3, 32 );
+    this.borda.material = new THREE.LineBasicMaterial( { color: 0x000000 } );
+    this.borda.visible = false;
     // Remover o vertice do centro.
-    this.marcacao.geometry.vertices.shift();
+    this.borda.geometry.vertices.shift();
+
+    this.alvo = new THREE.Line();
+    this.alvo.geometry = new THREE.CircleGeometry( 1.7, 32 );
+    this.alvo.material = new THREE.LineBasicMaterial( { color: 0x000000 } );
+    this.alvo.visible = false;
+    // Remover o vertice do centro.
+    this.alvo.geometry.vertices.shift();
     
-    this.add( this.marcacao );
+    this.add( this.borda );
+    this.add( this.alvo );
     
     console.log("vertice criado");    
 };
@@ -42,7 +50,8 @@ Vertice.prototype.restaurarCor = function()
 
 Vertice.prototype.setMarcado = function( valor ) 
 {
-    this.marcacao.visible = valor;
+    this.borda.visible = valor;
+    this.alvo.visible = valor;
 };
 
 Vertice.prototype.marcar = function() 
