@@ -19,7 +19,7 @@
     </ion-modal-view>
 </script>
 
-<ion-view view-title="Indoor" cache-view="false">
+<ion-view view-title="{{ bloco.nome }}" cache-view="false">
     <ion-content scroll="false">
         
         <div id="niveis">
@@ -31,25 +31,6 @@
         </div>        
 
         <div id="mapa"></div>
-
-        <!-- <div id="rota">
-            
-            <div id="informacoes">
-                <ul>
-                    <li>Origem: {{ origem.descricao }}</li>
-                    <li>Destino: {{ destino.descricao }}</li>
-                </ul>
-            </div>
-
-            <div id="navegacao" class="button-bar">
-                <a class="button">First</a>
-                <a class="button">Second</a>
-                <a class="button">Third</a>
-            </div>
-
-            <button ng-click="calcularRota()">{{ rotuloBotaoRota }}</button>
-        </div>
-        -->
         
         <button id="localiza" class="button icon ion-android-locate" ng-click="localizar()"></button>
         <button id="pesquisa" class="button icon ion-search" ng-click="pesquisar()"></button>

@@ -356,7 +356,7 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $filter, $stateParams, $
         {
             $scope.rota = new THREE.Object3D;
 
-            var caminho = angular.copy(RotaService.caminho); 
+            var caminho = RotaService.obterCaminho(); 
 
             for (var i = 1; i < caminho.length; i++) 
             {

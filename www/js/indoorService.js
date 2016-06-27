@@ -128,6 +128,11 @@ app.factory('RotaService', function(DijkstraService)
       return (op > 0) ? this.goProximo() : this.goAnterior();
     },
 
+    obterCaminho: function()
+    {
+      return angular.copy(this.caminho);
+    },
+
     calcularCaminho: function(origem, destino) 
     {
       this.origem = angular.copy(origem);      
@@ -141,6 +146,7 @@ app.factory('RotaService', function(DijkstraService)
       this.origem = { },
       this.destino = { },
       this.caminho = [];
+      this.posicao = 0;
       this.calculado = false;
     }
   }
