@@ -21,14 +21,18 @@ Planta.prototype.carregaPlanta = function(baseURL, params, fnSucesso, fnProgress
     objLoader.load( params + 'obj', function ( object ) 
     {
         var material = new THREE.LineBasicMaterial({ color: 0x000000 });
-             
+        var contador = 0;
+
         object.traverse(function (child)
         { 
             if (child instanceof THREE.Line)
             {
                 child.material = material;
             }
+            contador++;
         });
+
+        console.log("Qtde elementos planta: " + contador);
         
         var box = new THREE.Box3().setFromObject( object );
         var center = box.center();

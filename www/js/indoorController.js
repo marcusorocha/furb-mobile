@@ -140,7 +140,10 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $filter, $stateParams, $
                 {
                     $scope.grafo = response.data;                    
                     $scope.grafo.id = blocoId;
-                    GrafoService.putGrafo($scope.grafo);                    
+                    GrafoService.putGrafo($scope.grafo);
+
+                    console.log('Grafo -> Vertices = ' + $scope.grafo.vertices.length);                    
+                    console.log('Grafo -> Arestas = ' + $scope.grafo.arestas.length);
 
                     $scope.carregarPavimento(pavimentoId, verticeId);
                 },
@@ -261,6 +264,7 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $filter, $stateParams, $
 
         $scope.pontosRelevantes = new THREE.Object3D;
 
+        console.time('carga-grafo');
         $scope.grafo.vertices.forEach(function(value) 
         {
             if (value.idPavimento == $scope.pavimento.id)
@@ -276,9 +280,10 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $filter, $stateParams, $
 
                 $scope.pontosRelevantes.add( vertice );
             }
-        });
+        });        
 
         $scope.ambiente.scene.add( $scope.pontosRelevantes );
+        console.timeEnd('carga-grafo');
     }
     
     $scope.showAlert = function(msg)
@@ -319,11 +324,14 @@ strCtrlModule.controller('IndoorCtrl', function($scope, $filter, $stateParams, $
         }
         else if (($scope.origem) && ($scope.destino))
         {
+            console.time('calculo-rota');
             RotaService.putGrafo($scope.grafo);
             RotaService.calcularCaminho($scope.origem, $scope.destino);
-            
+                        
             $scope.posicao = RotaService.getVerticePosicao();
-            $scope.mostrarRota();                    
+            $scope.mostrarRota();
+            console.timeEnd('calculo-rota');
+
             $scope.mostrarPavimentoPosicaoNavegacao();
         }
         else {

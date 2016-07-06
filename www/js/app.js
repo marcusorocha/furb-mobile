@@ -8,19 +8,31 @@ var app = angular.module('starter', ['ionic', 'starter.controllers', 'ngCordova'
 
 var api = 'http://indoor-furbmobile2016.rhcloud.com/api';
 
-app.run(function($ionicPlatform) {
-    $ionicPlatform.ready(function() {
+app.run(function($ionicPlatform) 
+{
+    $ionicPlatform.ready(function() 
+    {
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
         // for form inputs)
-        if (window.cordova && window.cordova.plugins.Keyboard) {
+        if (window.cordova && window.cordova.plugins.Keyboard) 
+        {
             cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
             cordova.plugins.Keyboard.disableScroll(true);
-
         }
-        if (window.StatusBar) {
+        
+        if (window.StatusBar) 
+        {
             // org.apache.cordova.statusbar required
             StatusBar.styleDefault();
         }
+
+        var deviceInformation = ionic.Platform.device();
+        var currentPlatform = ionic.Platform.platform();
+        var currentPlatformVersion = ionic.Platform.version();
+
+        console.log(deviceInformation);
+        console.log(currentPlatform);
+        console.log(currentPlatformVersion);
     });
 });
 
